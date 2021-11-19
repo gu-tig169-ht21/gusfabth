@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-final List<String> _input = <String>[""];
+final List<String> _input = <String>[];
 final _TextEdit = TextEditingController();
-final _klar = <String>[];
+final _ready = <String>[];
+final _filterchoice = <String>["All", "Done", "Undone"]; //filtermenyn
+String filterfunction = "All";
 
 void main() {
   runApp(const MaterialApp(
@@ -10,6 +12,8 @@ void main() {
     home: Home(),
   ));
 }
+
+//hemsidan
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -23,19 +27,26 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          IconButton(
-              icon: const Icon(Icons.more_vert),
-              tooltip: "Lägg till och ta bort",
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AddToDoPage()),
-                );
-              })
+          DropdownButton<String>(
+            hint: const Text("Filtrering"),
+            dropdownColor: Colors.white,
+            items: _filterchoice.map((String dropDownStringItem) {
+              return DropdownMenuItem<String>(
+                value: dropDownStringItem,
+                child: Text(dropDownStringItem),
+              );
+            }).toList(),
+            onChanged: (String? newValueSelected) {
+              setState(() {
+                filterfunction = newValueSelected!;
+              });
+            },
+            value: filterfunction,
+          ),
         ],
         title: const Text("Att göra"),
       ),
-      body: listBuilder(),
+      body: filtrering(filterfunction),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
@@ -48,12 +59,14 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget listBuilder() {
+//listskaparen för förstasidan
+
+  Widget listBuilder(List<String> input) {
     return ListView.builder(
         padding: const EdgeInsets.all(12),
         itemBuilder: (BuildContext _context, int n) {
-          if (n < _input.length) {
-            return _toDoItem(_input[n]);
+          if (n < input.length) {
+            return _toDoItem(input[n]);
           } else {
             return const Divider(
               color: Colors.white,
@@ -62,8 +75,10 @@ class _HomeState extends State<Home> {
         });
   }
 
+// checka av knapp, ta bort knapp,
+
   Widget _toDoItem(String text) {
-    final _fardig = _klar.contains(text);
+    final _fardig = _ready.contains(text);
 
     _input.contains(text) ? null : _input.add(text);
     return Card(
@@ -80,7 +95,7 @@ class _HomeState extends State<Home> {
       ),
       onTap: () {
         setState(() {
-          _fardig ? _klar.remove(text) : _klar.add(text);
+          _fardig ? _ready.remove(text) : _ready.add(text);
         });
       },
       trailing: IconButton(
@@ -92,7 +107,41 @@ class _HomeState extends State<Home> {
           }),
     ));
   }
+
+// filreringsfunktionen
+
+  Widget filtrering(String a) {
+    List<String> undone = <String>[];
+    switch (a) {
+      case "All":
+        {
+          return listBuilder(_input);
+        }
+
+      case "Done":
+        {
+          return listBuilder(_ready);
+        }
+
+      case "Undone":
+        {
+          for (int i = 0; i < _input.length; i++) {
+            if (!_ready.contains(_input[i])) {
+              undone.add(_input[i]);
+            }
+          }
+          return listBuilder(undone);
+        }
+
+      default:
+        {
+          return listBuilder(_input);
+        }
+    }
+  }
 }
+
+//andra sidan
 
 class AddToDoPage extends StatefulWidget {
   const AddToDoPage({Key? key}) : super(key: key);
