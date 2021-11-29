@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'api.dart';
 
-final List<String> _input = <String>[];
+List<todoList> _input = <todoList>[];
 final _TextEdit = TextEditingController();
 final _ready = <String>[];
 final _filterchoice = <String>["All", "Done", "Undone"]; //filtermenyn
@@ -61,7 +63,7 @@ class _HomeState extends State<Home> {
 
 //listskaparen för förstasidan
 
-  Widget listBuilder(List<String> input) {
+  Widget listBuilder(List<todoList> input) {
     return ListView.builder(
         padding: const EdgeInsets.all(12),
         itemBuilder: (BuildContext _context, int n) {
@@ -75,16 +77,16 @@ class _HomeState extends State<Home> {
         });
   }
 
-// checka av knapp, ta bort knapp,
+// checka av knapp, ta bort knapp, gör rad
 
-  Widget _toDoItem(String text) {
-    final _fardig = _ready.contains(text);
+  Widget _toDoItem(todoList text) {
+    final _fardig = text.done; //_ready.contains(text);
 
     _input.contains(text) ? null : _input.add(text);
     return Card(
         child: ListTile(
       title: Text(
-        text,
+        text.title,
         style: TextStyle(
           decoration: _fardig ? TextDecoration.lineThrough : null,
         ),
@@ -94,15 +96,31 @@ class _HomeState extends State<Home> {
         color: _fardig ? Colors.blue : null,
       ),
       onTap: () {
+        int index = _input.indexWhere((item) => item.id == text.id);
+        if (_fardig) {
+          updateList(text.title, false, text.id);
+          setState(() {
+            _input[index].done = false;
+          });
+        } else {
+          updateList(text.title, true, text.id);
+          setState(() {
+            _input[index].done = true;
+          });
+        }
+      },
+      /* onTap: () {
         setState(() {
           _fardig ? _ready.remove(text) : _ready.add(text);
         });
       },
+      */
       trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
           onPressed: () {
+            deleteList(text.id);
             setState(() {
-              _input.remove(text);
+              _input.removeWhere((Element) => Element.id == text.id);
             });
           }),
     ));
@@ -120,17 +138,19 @@ class _HomeState extends State<Home> {
 
       case "Done":
         {
-          return listBuilder(_ready);
+          return listBuilder(
+              _input.where((todo) => todo.done == true).toList());
         }
 
       case "Undone":
         {
-          for (int i = 0; i < _input.length; i++) {
+          /*for (int i = 0; i < _input.length; i++) {
             if (!_ready.contains(_input[i])) {
               undone.add(_input[i]);
             }
-          }
-          return listBuilder(undone);
+          }*/
+          return listBuilder(
+              _input.where((todo) => todo.done == false).toList());
         }
 
       default:
@@ -165,7 +185,10 @@ class _AddToDoPageState extends State<AddToDoPage> {
             OutlinedButton(
                 onPressed: () {
                   setState(() {
-                    _input.add(_TextEdit.text);
+                    updateList(_TextEdit.text, false, _TextEdit.text);
+                    fetchList();
+                    _input = List.from(apiDartList);
+
                     _TextEdit.clear();
                   });
                 },
