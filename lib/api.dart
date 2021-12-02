@@ -22,15 +22,15 @@ class Todo {
 class Call {
 //-----------Sending data to server, POST
 
-  static Future<List<Todo>> sendList(Todo test) async {
+  static Future<List<Todo>> sendList(Todo object) async {
     http.Response response = await http.post(
       Uri.parse('$apiurl/todos?key=$apikey'),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, dynamic>{
-        'title': test.title,
-        'done': test.done,
+        'title': object.title,
+        'done': object.done,
       }),
     );
 

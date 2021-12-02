@@ -33,7 +33,7 @@ class _HomeState extends State<Home> {
     super.initState();
   }
 
-  void send(Todo test) async {}
+  void send(Todo object) async {}
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,7 +151,6 @@ class _HomeState extends State<Home> {
 // filreringsfunktionen
 
   Widget filtrering(String a) {
-    List<String> undone = <String>[];
     switch (a) {
       case "All":
         {

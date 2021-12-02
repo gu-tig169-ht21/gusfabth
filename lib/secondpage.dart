@@ -35,13 +35,9 @@ class _AddToDoPageState extends State<AddToDoPage> {
             OutlinedButton(
                 child: const Text("Lägg till"),
                 onPressed: () {
-                  Todo test = Todo(title: _textEdit.text);
-                  Call.sendList(test);
+                  Todo object = Todo(title: _textEdit.text);
+                  Call.sendList(object);
                   _textEdit.clear();
-                  //setState(() {
-                  //sendList(_TextEdit.text, false);
-                  //fetchList();
-                  //_input = List.from(apiDartList);
                 }),
           ],
         )));
