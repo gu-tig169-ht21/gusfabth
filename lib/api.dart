@@ -4,81 +4,85 @@ import 'dart:convert';
 String apikey = '893d8cbc-6731-4bd3-abf4-df47ef87199f';
 String apiurl = 'https://todoapp-api-pyq5q.ondigitalocean.app';
 
-List<todoList> apiDartList = <todoList>[];
+List<Todo> apiDartList = <Todo>[];
 
-class todoList {
+class Todo {
   String id, title;
   bool done;
-  todoList(this.id, this.title, this.done);
-  factory todoList.fromJson(Map<String, dynamic> json) {
-    return todoList(
-      json['id'],
-      json['title'],
-      json['done'],
+  Todo({this.id = "", required this.title, this.done = false});
+  factory Todo.fromJson(Map<dynamic, dynamic> json) {
+    return Todo(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      done: json['done'] as bool,
     );
   }
 }
 
+class Call {
 //-----------Sending data to server, POST
 
-Future sendList(String title) async {
-  final response = await http.post(
-    Uri.parse('$apiurl/todos?key$apikey'),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-    body: jsonEncode(<String, String>{
-      'title': title,
-    }),
-  );
+  static Future<List<Todo>> sendList(Todo test) async {
+    http.Response response = await http.post(
+      Uri.parse('$apiurl/todos?key=$apikey'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'title': test.title,
+        'done': test.done,
+      }),
+    );
 
-  if (response.statusCode == 200) {
-    return todoList.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to create album.');
+    List<dynamic> parsedList = jsonDecode(response.body);
+    List<Todo> apiDartList =
+        List<Todo>.from(parsedList.map((i) => Todo.fromJson(i)));
+    return apiDartList;
   }
-}
 
 //------------Fetch data from the internet, GET
 
-Future fetchList() async {
-  final response = await http.get(Uri.parse('$apiurl/todos?key=$apikey'));
+  static Future<List<Todo>> fetchList() async {
+    http.Response response =
+        await http.get(Uri.parse('$apiurl/todos?key=$apikey'));
 
-  if (response.statusCode == 200) {
-    return todoList.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to load album');
+    List<dynamic> parsedList = jsonDecode(response.body);
+    List<Todo> apiDartList =
+        List<Todo>.from(parsedList.map((i) => Todo.fromJson(i)));
+    return apiDartList;
   }
-}
 
 //------------Updating data over the internet, PUT
 
-Future updateList(String title, bool done, String id) async {
-  final response = await http.put(
-    Uri.parse('$apiurl/todos/:id?key=$apikey'),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-    body: jsonEncode(<String, String>{
-      'title': title,
-    }),
-  );
-  if (response.statusCode == 200) {
-    return todoList.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to update album.');
+  static Future<Todo> updateList(String title, bool done, String id) async {
+    http.Response response = await http.put(
+      Uri.parse('$apiurl/todos/$id?key=$apikey'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'title': title,
+        'done': done,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return Todo.fromJson(jsonDecode(response.body)[0]);
+    } else {
+      throw Exception('Failed to update album.');
+    }
   }
-}
 
 //---------Delete data on the internet, DELETE
 
-Future deleteList(String id) async {
-  final http.Response response = await http.delete(
-    Uri.parse('$apiurl/todos/:id?key=$apikey'),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-  );
+  static Future deleteList(String id) async {
+    final http.Response response = await http.delete(
+      Uri.parse('$apiurl/todos/$id?key=$apikey'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
 
-  return response;
+    return response;
+  }
 }
