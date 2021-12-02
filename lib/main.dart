@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'api.dart';
+import 'secondpage.dart';
 
-List<todoList> _input = <todoList>[];
-final _TextEdit = TextEditingController();
-final _ready = <String>[];
+List<Todo> _input = <Todo>[];
 final _filterchoice = <String>["All", "Done", "Undone"]; //filtermenyn
 String filterfunction = "All";
 
-void main() {
-  runApp(const MaterialApp(
-    title: "Att göra",
-    home: Home(),
-  ));
+Future<List<Todo>>? futureTodoList;
+
+void main() =>
+    runApp(const MaterialApp(home: Home(), debugShowCheckedModeBanner: false));
+
+class _ApiGetter {
+  Future<List<Todo>> getApi() async {
+    _input = await Call.fetchList();
+    return _input;
+  }
 }
 
 //hemsidan
@@ -25,6 +28,13 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   @override
+  void initState() {
+    futureTodoList = _ApiGetter().getApi();
+    super.initState();
+  }
+
+  void send(Todo test) async {}
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -46,24 +56,42 @@ class _HomeState extends State<Home> {
             value: filterfunction,
           ),
         ],
-        title: const Text("Att göra"),
+        title: const Text("Todo list"),
+        centerTitle: true,
       ),
-      body: filtrering(filterfunction),
+      body: Center(
+        child: FutureBuilder(
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return (filtrering(filterfunction));
+            } else if (snapshot.hasError) {
+              return Text('${snapshot.error}');
+            }
+            return const CircularProgressIndicator();
+          },
+          future: futureTodoList,
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddToDoPage()),
-          );
+          ).then(get);
         },
       ),
     );
   }
 
+  Future? get(dynamic value) {
+    setState(() {
+      futureTodoList = _ApiGetter().getApi();
+    });
+  }
 //listskaparen för förstasidan
 
-  Widget listBuilder(List<todoList> input) {
+  Widget listBuilder(List<Todo> input) {
     return ListView.builder(
         padding: const EdgeInsets.all(12),
         itemBuilder: (BuildContext _context, int n) {
@@ -79,8 +107,8 @@ class _HomeState extends State<Home> {
 
 // checka av knapp, ta bort knapp, gör rad
 
-  Widget _toDoItem(todoList text) {
-    final _fardig = text.done; //_ready.contains(text);
+  Widget _toDoItem(Todo text) {
+    final _ready = text.done;
 
     _input.contains(text) ? null : _input.add(text);
     return Card(
@@ -88,39 +116,33 @@ class _HomeState extends State<Home> {
       title: Text(
         text.title,
         style: TextStyle(
-          decoration: _fardig ? TextDecoration.lineThrough : null,
+          decoration: _ready ? TextDecoration.lineThrough : null,
         ),
       ),
       leading: Icon(
-        _fardig ? Icons.check_box : Icons.check_box_outline_blank_outlined,
-        color: _fardig ? Colors.blue : null,
+        _ready ? Icons.check_box : Icons.check_box_outline_blank_outlined,
+        color: _ready ? Colors.blue : null,
       ),
       onTap: () {
         int index = _input.indexWhere((item) => item.id == text.id);
-        if (_fardig) {
-          updateList(text.title, false, text.id);
+        if (_ready) {
+          Call.updateList(text.title, false, text.id);
           setState(() {
             _input[index].done = false;
           });
         } else {
-          updateList(text.title, true, text.id);
+          Call.updateList(text.title, true, text.id);
           setState(() {
             _input[index].done = true;
           });
         }
       },
-      /* onTap: () {
-        setState(() {
-          _fardig ? _ready.remove(text) : _ready.add(text);
-        });
-      },
-      */
       trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
           onPressed: () {
-            deleteList(text.id);
+            Call.deleteList(text.id);
             setState(() {
-              _input.removeWhere((Element) => Element.id == text.id);
+              _input.removeWhere((element) => element.id == text.id);
             });
           }),
     ));
@@ -144,11 +166,6 @@ class _HomeState extends State<Home> {
 
       case "Undone":
         {
-          /*for (int i = 0; i < _input.length; i++) {
-            if (!_ready.contains(_input[i])) {
-              undone.add(_input[i]);
-            }
-          }*/
           return listBuilder(
               _input.where((todo) => todo.done == false).toList());
         }
@@ -158,42 +175,5 @@ class _HomeState extends State<Home> {
           return listBuilder(_input);
         }
     }
-  }
-}
-
-//andra sidan
-
-class AddToDoPage extends StatefulWidget {
-  const AddToDoPage({Key? key}) : super(key: key);
-
-  @override
-  _AddToDoPageState createState() => _AddToDoPageState();
-}
-
-class _AddToDoPageState extends State<AddToDoPage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text("Utöka To do list"),
-        ),
-        body: Center(
-            child: Column(
-          children: <Widget>[
-            TextField(controller: _TextEdit),
-            const Divider(height: 18),
-            OutlinedButton(
-                onPressed: () {
-                  setState(() {
-                    updateList(_TextEdit.text, false, _TextEdit.text);
-                    fetchList();
-                    _input = List.from(apiDartList);
-
-                    _TextEdit.clear();
-                  });
-                },
-                child: const Text("Add")),
-          ],
-        )));
   }
 }
