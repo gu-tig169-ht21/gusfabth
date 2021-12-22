@@ -2,19 +2,13 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'secondpage.dart';
 
-List<Todo> _input = <Todo>[];
-final _filterchoice = <String>["All", "Done", "Undone"]; //filtermenyn
-String filterfunction = "All";
-
-Future<List<Todo>>? futureTodoList;
-
 void main() =>
     runApp(const MaterialApp(home: Home(), debugShowCheckedModeBanner: false));
 
 class _ApiGetter {
   Future<List<Todo>> getApi() async {
-    _input = await Call.fetchList();
-    return _input;
+    _HomeState._input = await Call.fetchList();
+    return _HomeState._input;
   }
 }
 
@@ -27,6 +21,12 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  static List<Todo> _input = <Todo>[];
+  final _filterchoice = <String>["All", "Done", "Undone"]; //filtermenyn
+  String filterfunction = "All";
+
+  Future<List<Todo>>? futureTodoList;
+
   @override
   void initState() {
     futureTodoList = _ApiGetter().getApi();
@@ -73,7 +73,7 @@ class _HomeState extends State<Home> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
         onPressed: () {
           Navigator.push(
             context,
@@ -93,6 +93,7 @@ class _HomeState extends State<Home> {
 
   Widget listBuilder(List<Todo> input) {
     return ListView.builder(
+        itemCount: _input.length,
         padding: const EdgeInsets.all(12),
         itemBuilder: (BuildContext _context, int n) {
           if (n < input.length) {
@@ -110,7 +111,6 @@ class _HomeState extends State<Home> {
   Widget _toDoItem(Todo text) {
     final _ready = text.done;
 
-    _input.contains(text) ? null : _input.add(text);
     return Card(
         child: ListTile(
       title: Text(
@@ -123,24 +123,21 @@ class _HomeState extends State<Home> {
         _ready ? Icons.check_box : Icons.check_box_outline_blank_outlined,
         color: _ready ? Colors.blue : null,
       ),
-      onTap: () {
-        int index = _input.indexWhere((item) => item.id == text.id);
+      onTap: () async {
         if (_ready) {
-          Call.updateList(text.title, false, text.id);
-          setState(() {
-            _input[index].done = false;
-          });
+          await Call.updateList(text.title, false, text.id);
+          _input = await Call.fetchList();
+          setState(() {});
         } else {
-          Call.updateList(text.title, true, text.id);
-          setState(() {
-            _input[index].done = true;
-          });
+          await Call.updateList(text.title, true, text.id);
+          _input = await Call.fetchList();
+          setState(() {});
         }
       },
       trailing: IconButton(
           icon: const Icon(Icons.delete_outline),
-          onPressed: () {
-            Call.deleteList(text.id);
+          onPressed: () async {
+            await Call.deleteList(text.id);
             setState(() {
               _input.removeWhere((element) => element.id == text.id);
             });
