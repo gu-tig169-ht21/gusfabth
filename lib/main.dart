@@ -138,9 +138,8 @@ class _HomeState extends State<Home> {
           icon: const Icon(Icons.delete_outline),
           onPressed: () async {
             await Call.deleteList(text.id);
-            setState(() {
-              _input.removeWhere((element) => element.id == text.id);
-            });
+            _input = await Call.fetchList();
+            setState(() {});
           }),
     ));
   }
