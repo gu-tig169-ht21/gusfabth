@@ -3,8 +3,6 @@
 import 'package:flutter/material.dart';
 import 'api.dart';
 
-final _textEdit = TextEditingController();
-
 //andra sidan
 
 class AddToDoPage extends StatefulWidget {
@@ -15,6 +13,7 @@ class AddToDoPage extends StatefulWidget {
 }
 
 class _AddToDoPageState extends State<AddToDoPage> {
+  final _textEdit = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +24,7 @@ class _AddToDoPageState extends State<AddToDoPage> {
         body: Center(
             child: Column(
           children: <Widget>[
-            Padding(padding: const EdgeInsets.all(20)),
+            const Padding(padding: EdgeInsets.all(20)),
             TextField(
               controller: _textEdit,
               decoration: const InputDecoration(
@@ -34,9 +33,9 @@ class _AddToDoPageState extends State<AddToDoPage> {
             const Divider(height: 18),
             OutlinedButton(
                 child: const Text("Lägg till"),
-                onPressed: () {
+                onPressed: () async {
                   Todo object = Todo(title: _textEdit.text);
-                  Call.sendList(object);
+                  await Call.sendList(object);
                   _textEdit.clear();
                 }),
           ],

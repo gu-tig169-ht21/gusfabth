@@ -1,11 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-String apikey = '893d8cbc-6731-4bd3-abf4-df47ef87199f';
-String apiurl = 'https://todoapp-api-pyq5q.ondigitalocean.app';
-
-List<Todo> apiDartList = <Todo>[];
-
 class Todo {
   String id, title;
   bool done;
@@ -20,7 +15,12 @@ class Todo {
 }
 
 class Call {
-//-----------Sending data to server, POST
+  List<Todo> apiDartList = <Todo>[];
+
+  static String apikey = '893d8cbc-6731-4bd3-abf4-df47ef87199f';
+  static String apiurl = 'https://todoapp-api-pyq5q.ondigitalocean.app';
+
+  //-----------Sending data to server, POST
 
   static Future<List<Todo>> sendList(Todo object) async {
     http.Response response = await http.post(
